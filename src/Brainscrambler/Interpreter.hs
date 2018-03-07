@@ -63,7 +63,9 @@ compile (Free as) = case as of
         start' <- preuse (cyclesStarts . Stack._head)
         case (head'', start') of
             (Just head', Just start) | head' > 0 -> start
-            _                        -> compile next
+            _ -> do
+                cyclesStarts %= Stack.pop
+                compile next
   where
     withNext next m = m >> compile next
     clusterValue :: Lens' ProgramState (Stack Int)
