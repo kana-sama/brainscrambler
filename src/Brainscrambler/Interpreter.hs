@@ -1,5 +1,5 @@
 module Brainscrambler.Interpreter
-       ( runBrainscrambler
+       ( run
        ) where
 
 import           Universum
@@ -36,8 +36,8 @@ type Program
 
 Lens.makeLenses ''ProgramState
 
-runBrainscrambler :: Brainscrambler () -> String
-runBrainscrambler = interpret . compile
+run :: Brainscrambler () -> String
+run = interpret . compile
 
 interpret :: Program () -> String
 interpret = execWriter . flip evalStateT emptyState

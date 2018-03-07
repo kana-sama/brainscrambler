@@ -10,7 +10,7 @@ import           Brainscrambler.AST         (cycleEnd, cycleStart, decrement,
                                              increment, input, moveHeadToLeft,
                                              moveHeadToRight, output, pushZero,
                                              rotate)
-import           Brainscrambler.Interpreter (runBrainscrambler)
+import           Brainscrambler.Interpreter (run)
 
 spec :: Spec
 spec = do
@@ -133,4 +133,4 @@ spec = do
                     decrement >> decrement
                     cycleEnd
   where
-    outputShouldBe x m = runBrainscrambler m `shouldBe` x
+    outputShouldBe x m = run m `shouldBe` x
