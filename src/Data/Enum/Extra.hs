@@ -1,18 +1,18 @@
 module Data.Enum.Extra
-       ( closuredSucc
-       , closuredPred
+       ( closedSucc
+       , closedPred
        , enums
        ) where
 
 import           Universum
 
-closuredSucc :: (Eq a, Enum a, Bounded a) => a -> a
-closuredSucc x
+closedSucc :: (Eq a, Enum a, Bounded a) => a -> a
+closedSucc x
   | x == maxBound = minBound
   | otherwise     = succ x
 
-closuredPred :: (Eq a, Enum a, Bounded a) => a -> a
-closuredPred x
+closedPred :: (Eq a, Enum a, Bounded a) => a -> a
+closedPred x
   | x == minBound = maxBound
   | otherwise     = pred x
 

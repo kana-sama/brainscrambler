@@ -25,25 +25,25 @@ data StackId
     deriving (Eq, Ord, Bounded, Enum, Show)
 
 data ProgramState = ProgramState
-  { _cluster :: Cluster StackId (Stack Int)
-  , _cycles  :: Stack (Program ())
-  }
+    { _cluster      :: Cluster StackId (Stack Int)
+    , _cyclesStarts :: Stack (Program ())
+    }
 
 type Program
-  = StateT ProgramState
-  $ Writer String
+    = StateT ProgramState
+    $ Writer String
 
 Lens.makeLenses ''ProgramState
 
 runBrainscrambler :: Brainscrambler () -> String
-runBrainscrambler = run . compile
+runBrainscrambler = eval . compile
 
-run :: Program () -> String
-run = execWriter . flip evalStateT initialState
+eval :: Program () -> String
+eval = execWriter . flip evalStateT emptyState
   where
-    initialState = ProgramState{..}
+    emptyState = ProgramState{..}
     _cluster = mempty
-    _cycles  = mempty
+    _cyclesStarts = mempty
 
 compile :: Brainscrambler () -> Program ()
 compile (Pure a) = pure a
@@ -56,11 +56,11 @@ compile (Free as) = case as of
     Rotate          next -> withNext next $ cluster %= Cluster.rotateRight
     MoveHeadToLeft  next -> withNext next $ cluster %= moveStackHeadToLeft
     MoveHeadToRight next -> withNext next $ cluster %= moveStackHeadToRight
-    CycleStart      next -> withNext next $ cycles %= Stack.push (compile next)
     Output          next -> withNext next $ preuse clusterValueHead >>= mapM (tell . show)
+    CycleStart      next -> withNext next $ cyclesStarts %= Stack.push (compile next)
     CycleEnd        next -> do
         head'' <- preuse clusterValueHead
-        start' <- preuse (cycles . Stack._head)
+        start' <- preuse (cyclesStarts . Stack._head)
         case (head'', start') of
             (Just head', Just start) | head' > 0 -> start
             _                        -> compile next

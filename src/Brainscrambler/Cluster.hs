@@ -7,7 +7,7 @@ module Brainscrambler.Cluster
 
 import           Universum
 
-import           Data.Enum.Extra     (closuredPred, closuredSucc, enums)
+import           Data.Enum.Extra     (closedPred, closedSucc, enums)
 
 import           Data.Map            (Map)
 import qualified Data.Map            as Map
@@ -26,7 +26,7 @@ instance (Ord i, Bounded i, Enum i, Monoid a) => Monoid (Cluster i a) where
     mempty = Cluster{..}
       where
         _valueId = minBound
-        _values = Map.fromList $ (, mempty) <$> enums
+        _values = Map.fromList . fmap (, mempty) $ enums
     mappend = error "no append for `Cluster i a`"
 
 value :: (Ord i, Monoid a) => Lens' (Cluster i a) a
@@ -41,7 +41,7 @@ value = Lens.lens getter setter
         in cluster & values . Lens.at id ?~ value'
 
 rotateLeft :: (Eq i, Enum i, Bounded i) => Cluster i a -> Cluster i a
-rotateLeft = valueId %~ closuredPred
+rotateLeft = valueId %~ closedPred
 
 rotateRight :: (Eq i, Enum i, Bounded i) => Cluster i a -> Cluster i a
-rotateRight = valueId %~ closuredSucc
+rotateRight = valueId %~ closedSucc
