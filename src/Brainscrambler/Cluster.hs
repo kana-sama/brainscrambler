@@ -1,5 +1,6 @@
 module Brainscrambler.Cluster
        ( Cluster
+       , makeBy
        , value
        , rotateLeft
        , rotateRight
@@ -18,27 +19,29 @@ import qualified Lens.Micro.Platform as Lens
 data Cluster i a = Cluster
     { _values  :: Map i a
     , _valueId :: i
+    , _makeFn  :: i -> a
     }
 
 Lens.makeLenses ''Cluster
 
-instance (Ord i, Bounded i, Enum i, Monoid a) => Monoid (Cluster i a) where
-    mempty = Cluster{..}
-      where
-        _valueId = minBound
-        _values = Map.fromList . fmap (, mempty) $ enums
-    mappend = error "no append for `Cluster i a`"
+makeBy :: (Ord i, Bounded i, Enum i) => (i -> a) -> Cluster i a
+makeBy f = Cluster{..}
+  where
+    _valueId = minBound
+    _values = Map.fromList . fmap (\i -> (i, f i)) $ enums
+    _makeFn = f
 
-value :: (Ord i, Monoid a) => Lens' (Cluster i a) a
+value :: Ord i => Lens' (Cluster i a) a
 value = Lens.lens getter setter
   where
-    getter cluster =
-        let id = cluster ^. valueId
-            value' = cluster ^. values . Lens.at id
-        in fromMaybe mempty value'
-    setter cluster value' =
-        let id = cluster ^. valueId
-        in cluster & values . Lens.at id ?~ value'
+    getter cluster = fromMaybe defaultValue value'
+      where
+        id = cluster ^. valueId
+        value' = cluster ^. values . Lens.at id
+        defaultValue = (cluster ^. makeFn) id
+    setter cluster value' = cluster & values . Lens.at id ?~ value'
+      where
+        id = cluster ^. valueId
 
 rotateLeft :: (Eq i, Enum i, Bounded i) => Cluster i a -> Cluster i a
 rotateLeft = valueId %~ closedPred

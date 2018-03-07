@@ -1,5 +1,6 @@
 module Brainscrambler.Stack
        ( Stack
+       , fromList
        , push
        , pop
        , _head
@@ -9,22 +10,21 @@ import           Universum
 
 import qualified Lens.Micro.Platform as Lens
 
-newtype Stack a = Stack { _stackList :: [a] }
+newtype Stack a = Stack { _getList :: [a] }
 
 Lens.makeLenses ''Stack
 
-instance Monoid (Stack a) where
-    mempty = Stack []
-    mappend (Stack a) (Stack b) = Stack (mappend a b)
+fromList :: [a] -> Stack a
+fromList = Stack
 
 _head :: Traversal' (Stack a) a
-_head = stackList . Lens._head
+_head = getList . Lens._head
 
 push :: a -> Stack a -> Stack a
-push x = stackList %~ (x :)
+push x = getList %~ (x :)
 
 pop :: Stack a -> Stack a
-pop = stackList %~ safeTail
+pop = getList %~ safeTail
   where
     safeTail []     = []
     safeTail (_:xs) = xs

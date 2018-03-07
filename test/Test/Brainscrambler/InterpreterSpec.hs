@@ -23,14 +23,12 @@ spec = do
             it "Increment should increment current value" $ do
                 outputShouldBe "2" $ do
                     pushZero
-                    increment
-                    increment
+                    increment >> increment
                     output
             it "Decrement should decrement current value" $ do
                 outputShouldBe "0" $ do
                     pushZero
-                    increment
-                    decrement
+                    increment >> decrement
                     output
             it "New value after push should be zero" $ do
                 outputShouldBe "0" $ do
@@ -41,19 +39,12 @@ spec = do
             it "3 - 1 + 1 = 3" $ do
                 outputShouldBe "3" $ do
                     pushZero
-                    increment
-                    increment
-                    increment
-                    decrement
-                    increment
+                    increment >> increment >> increment >> decrement >> increment
                     output
         describe "Rotation Tests" $ do
             it "4xrotate" $ do
                 outputShouldBe "0" $ do
-                    rotate
-                    rotate
-                    rotate
-                    rotate
+                    rotate >> rotate >> rotate >> rotate
                     pushZero
                     output
             it "*.#*+.#*++.#." $ do
@@ -66,44 +57,31 @@ spec = do
                     output
                     rotate
                     pushZero
-                    increment
-                    increment
+                    increment >> increment
                     output
                     rotate
                     output
             it "*++>#." $ do
                 outputShouldBe "2" $ do
                     pushZero
-                    increment
-                    increment
+                    increment >> increment
                     moveHeadToRight
                     rotate
                     output
             it "*+++<##." $ do
                 outputShouldBe "3" $ do
                     pushZero
-                    increment
-                    increment
-                    increment
+                    increment >> increment >> increment
                     moveHeadToLeft
-                    rotate
-                    rotate
+                    rotate >> rotate
                     output
             it "***++-+>#>#>#." $ do
                 outputShouldBe "2" $ do
-                    pushZero
-                    pushZero
-                    pushZero
-                    increment
-                    increment
-                    decrement
-                    increment
-                    moveHeadToLeft
-                    rotate
-                    moveHeadToLeft
-                    rotate
-                    moveHeadToLeft
-                    rotate
+                    pushZero >> pushZero >>pushZero
+                    increment >> increment >> decrement >> increment
+                    moveHeadToRight >> rotate
+                    moveHeadToRight >> rotate
+                    moveHeadToRight >> rotate
                     output
         describe "Loop Tests" $ do
             it ",5[.-]" $ do
@@ -128,8 +106,7 @@ spec = do
                     rotate
                     cycleStart
                     decrement
-                    rotate
-                    rotate
+                    rotate >> rotate
                     output
                     increment
                     rotate
@@ -139,16 +116,13 @@ spec = do
                     input 4
                     moveHeadToRight
                     pushZero
-                    increment
-                    increment
+                    increment >> increment
                     rotate
                     cycleStart
                     decrement
-                    rotate
-                    rotate
+                    rotate >> rotate
                     output
-                    increment
-                    increment
+                    increment >> increment
                     rotate
                     cycleEnd
             it ",9[.--]" $ do
@@ -156,8 +130,7 @@ spec = do
                     input 9
                     cycleStart
                     output
-                    decrement
-                    decrement
+                    decrement >> decrement
                     cycleEnd
   where
     outputShouldBe x m = runBrainscrambler m `shouldBe` x

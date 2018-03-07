@@ -25,8 +25,8 @@ data StackId
     deriving (Eq, Ord, Bounded, Enum, Show)
 
 data ProgramState = ProgramState
-    { _cluster      :: Cluster StackId (Stack Int)
-    , _cyclesStarts :: Stack (Program ())
+    { _cluster :: Cluster StackId (Stack Int)
+    , _labels  :: Stack (Program ())
     }
 
 type Program
@@ -42,8 +42,8 @@ eval :: Program () -> String
 eval = execWriter . flip evalStateT emptyState
   where
     emptyState = ProgramState{..}
-    _cluster = mempty
-    _cyclesStarts = mempty
+    _cluster = Cluster.makeBy (\_ -> Stack.fromList [0])
+    _labels = Stack.fromList []
 
 compile :: Brainscrambler () -> Program ()
 compile (Pure a) = pure a
@@ -57,14 +57,14 @@ compile (Free as) = case as of
     MoveHeadToLeft  next -> withNext next $ cluster %= moveStackHeadToLeft
     MoveHeadToRight next -> withNext next $ cluster %= moveStackHeadToRight
     Output          next -> withNext next $ preuse clusterValueHead >>= mapM (tell . show)
-    CycleStart      next -> withNext next $ cyclesStarts %= Stack.push (compile next)
+    CycleStart      next -> withNext next $ labels %= Stack.push (compile next)
     CycleEnd        next -> do
         head'' <- preuse clusterValueHead
-        start' <- preuse (cyclesStarts . Stack._head)
+        start' <- preuse (labels . Stack._head)
         case (head'', start') of
             (Just head', Just start) | head' > 0 -> start
             _ -> do
-                cyclesStarts %= Stack.pop
+                labels %= Stack.pop
                 compile next
   where
     withNext next m = m >> compile next
@@ -78,8 +78,12 @@ makeStackHeadMover
     -> (Cluster StackId (Stack a) -> Cluster StackId (Stack a))
     -> (Cluster StackId (Stack a) -> Cluster StackId (Stack a))
 makeStackHeadMover to from cluster' = fromMaybe cluster' $ do
-    x <- cluster' ^? Cluster.value . Stack._head
-    pure . from . (Cluster.value %~ Stack.push x) . to $ cluster'
+    head' <- cluster' ^? Cluster.value . Stack._head
+    pure $ cluster'
+        & Cluster.value %~ Stack.pop
+        & to
+        & Cluster.value %~ Stack.push head'
+        & from
 
 moveStackHeadToRight :: Cluster StackId (Stack a) -> Cluster StackId (Stack a)
 moveStackHeadToRight = makeStackHeadMover Cluster.rotateRight Cluster.rotateLeft
