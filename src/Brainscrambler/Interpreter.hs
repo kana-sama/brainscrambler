@@ -4,6 +4,7 @@ module Brainscrambler.Interpreter
 
 import           Universum
 
+import           Control.Monad.Extra    ((<<))
 import           Control.Monad.Free     (Free (..))
 import           Control.Monad.Writer   (Writer, execWriter, tell)
 
@@ -48,30 +49,29 @@ interpret = execWriter . flip evalStateT emptyState
 compile :: Brainscrambler () -> Program ()
 compile (Pure a) = pure a
 compile (Free as) = case as of
-    Increment       next -> withNext next $ clusterValueHead %= succ
-    Decrement       next -> withNext next $ clusterValueHead %= pred
-    PushZero        next -> withNext next $ clusterValue %= Stack.push 0
-    Input x         next -> withNext next $ clusterValue %= Stack.push x
-    Pop             next -> withNext next $ clusterValue %= Stack.pop
-    Rotate          next -> withNext next $ cluster %= Cluster.rotateRight
-    MoveHeadToLeft  next -> withNext next $ cluster %= moveStackHeadToLeft
-    MoveHeadToRight next -> withNext next $ cluster %= moveStackHeadToRight
-    Output          next -> withNext next $ preuse clusterValueHead >>= mapM (tell . show)
-    CycleStart      next -> withNext next $ labels %= Stack.push (compile next)
+    Increment       next -> compile next << clusterValueHead %= succ
+    Decrement       next -> compile next << clusterValueHead %= pred
+    PushZero        next -> compile next << clusterValue %= Stack.push 0
+    Input x         next -> compile next << clusterValue %= Stack.push x
+    Pop             next -> compile next << clusterValue %= Stack.pop
+    Rotate          next -> compile next << cluster %= Cluster.rotateRight
+    MoveHeadToLeft  next -> compile next << cluster %= moveStackHeadToLeft
+    MoveHeadToRight next -> compile next << cluster %= moveStackHeadToRight
+    Output          next -> compile next << (preuse clusterValueHead >>= mapM (tell . show))
+    CycleStart      next -> compile next << labels %= Stack.push (compile next)
     CycleEnd        next -> do
         head'' <- preuse clusterValueHead
-        start' <- preuse (labels . Stack._head)
+        start' <- preuse lastLabel
         case (head'', start') of
             (Just head', Just start) | head' > 0 -> start
-            _ -> do
-                labels %= Stack.pop
-                compile next
+            _                        -> compile next << labels %= Stack.pop
   where
-    withNext next m = m >> compile next
     clusterValue :: Lens' ProgramState (Stack Int)
     clusterValue = cluster . Cluster.value
     clusterValueHead :: Traversal' ProgramState Int
     clusterValueHead = clusterValue . Stack._head
+    lastLabel :: Traversal' ProgramState (Program ())
+    lastLabel = labels . Stack._head
 
 makeStackHeadMover
     :: (Cluster StackId (Stack a) -> Cluster StackId (Stack a))
