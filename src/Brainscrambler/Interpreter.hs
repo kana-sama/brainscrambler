@@ -36,10 +36,10 @@ type Program
 Lens.makeLenses ''ProgramState
 
 runBrainscrambler :: Brainscrambler () -> String
-runBrainscrambler = eval . compile
+runBrainscrambler = interpret . compile
 
-eval :: Program () -> String
-eval = execWriter . flip evalStateT emptyState
+interpret :: Program () -> String
+interpret = execWriter . flip evalStateT emptyState
   where
     emptyState = ProgramState{..}
     _cluster = Cluster.makeBy (\_ -> Stack.fromList [0])

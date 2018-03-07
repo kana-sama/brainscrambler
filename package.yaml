@@ -16,6 +16,7 @@ dependencies:
 - universum
 
 default-extensions:
+- DeriveFoldable
 - DeriveFunctor
 - FlexibleContexts
 - FlexibleInstances
@@ -35,6 +36,7 @@ library:
   dependencies:
   - containers
   - free
+  - megaparsec
   - microlens-platform
   - mtl
 
@@ -48,4 +50,6 @@ tests:
     - -with-rtsopts=-N
     dependencies:
     - brainscrambler
+    - free
     - hspec
+    - hspec-megaparsec
