@@ -27,7 +27,7 @@ token = AST.increment         <$ char '+'
     <|> AST.input             <$> (char ',' *> decimal)
 
 program :: Parser (Brainscrambler ())
-program = liftA2 (>>) token program <|> eof $> pure ()
+program = liftA2 (>>) token program <|> pure (pure ())
 
 parse :: String -> Maybe (Brainscrambler ())
 parse = rightToMaybe . runParser program ""
