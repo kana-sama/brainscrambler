@@ -1,0 +1,5 @@
+# brainscrambler
+
+```bash
+$ stack test
+```
